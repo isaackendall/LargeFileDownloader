@@ -57,6 +57,16 @@ enum DownloadLogKind {
         case .error: return "red"
         }
     }
+
+    var label: String {
+        switch self {
+        case .info: return "info"
+        case .command: return "command"
+        case .success: return "success"
+        case .warning: return "warning"
+        case .error: return "error"
+        }
+    }
 }
 
 struct DownloadLogEntry: Identifiable, Equatable {
