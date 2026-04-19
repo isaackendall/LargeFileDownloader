@@ -10,6 +10,7 @@ final class DownloaderViewModel {
     var status: DownloadStatus = .ready
     var resolvedURLText = ""
     var commandText: String { runningCommandText ?? commandPreviewText() }
+    var estimatedTimeRemainingText: String { estimatedTimeRemaining() }
     var canStop = false
     var downloadProgress = 0.0
     var downloadProgressText = "0%"
@@ -19,6 +20,7 @@ final class DownloaderViewModel {
     private let downloadService = DownloadService()
     private var session: DownloadSession?
     private var runningCommandText: String?
+    private var downloadStartedAt: Date?
 
     init() {
         addLog(kind: .info, "Paste a large-file URL, choose a folder, and start the transfer.")
@@ -33,6 +35,21 @@ final class DownloaderViewModel {
 
     func openFolder() {
         FolderPicker.openFolder(configuration.destinationFolder)
+    }
+
+    func copyLog() {
+        guard !logs.isEmpty else {
+            addLog(kind: .warning, "No log entries are available yet.")
+            return
+        }
+
+        let text = logs.map { entry in
+            "[\(Self.logDateFormatter.string(from: entry.date))] [\(entry.kind.label)] \(entry.message)"
+        }.joined(separator: "\n")
+
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        addLog(kind: .success, "Log copied to the clipboard.")
     }
 
     func copyCommand() {
@@ -77,6 +94,7 @@ final class DownloaderViewModel {
     private func startDownloadTask() async {
         do {
             resetProgress()
+            downloadStartedAt = .now
             status = .preparing
             addLog(kind: .info, "Validating the source URL and destination folder...")
 
@@ -175,6 +193,7 @@ final class DownloaderViewModel {
         downloadProgress = 0
         downloadProgressText = "0%"
         didReceiveProgressUpdate = false
+        downloadStartedAt = nil
     }
 
     private func updateProgress(_ progress: Double) {
@@ -183,4 +202,31 @@ final class DownloaderViewModel {
         downloadProgressText = "\(Int((clamped * 100).rounded()))%"
         didReceiveProgressUpdate = true
     }
+
+    private func estimatedTimeRemaining() -> String {
+        guard status == .running else { return "—" }
+        guard let startedAt = downloadStartedAt, downloadProgress > 0, downloadProgress < 1 else {
+            return "Calculating..."
+        }
+
+        let elapsed = Date().timeIntervalSince(startedAt)
+        guard elapsed.isFinite, elapsed > 0 else { return "Calculating..." }
+
+        let remainingSeconds = max(0, elapsed * (1 - downloadProgress) / downloadProgress)
+        return Self.durationFormatter.string(from: remainingSeconds) ?? "Calculating..."
+    }
+
+    private static let logDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss"
+        return formatter
+    }()
+
+    private static let durationFormatter: DateComponentsFormatter = {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.hour, .minute, .second]
+        formatter.unitsStyle = .abbreviated
+        formatter.zeroFormattingBehavior = .dropAll
+        return formatter
+    }()
 }

@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Large File Downloader Mockup</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg-0: #0f1318;
+        --bg-1: #121820;
+        --bg-2: #171e28;
+        --panel: rgba(20, 25, 32, 0.78);
+        --panel-border: rgba(255, 255, 255, 0.08);
+        --text: #f3f6fb;
+        --muted: #a4adba;
+        --muted-2: #7f8897;
+        --accent: #4d83f0;
+        --accent-2: #64e08d;
+        --warn: #efb04f;
+        --shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background:
+          radial-gradient(circle at 20% 0%, rgba(77, 131, 240, 0.18), transparent 28%),
+          radial-gradient(circle at 80% 0%, rgba(100, 224, 141, 0.12), transparent 24%),
+          linear-gradient(135deg, var(--bg-0), var(--bg-1) 52%, #141b24);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+        color: var(--text);
+      }
+
+      body {
+        padding: 32px;
+      }
+
+      .window {
+        width: min(1200px, calc(100vw - 64px));
+        margin: 0 auto;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 0;
+        overflow: hidden;
+        background:
+          linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0)),
+          linear-gradient(135deg, #10141a 0%, #121820 48%, #151c26 100%);
+        box-shadow: var(--shadow);
+      }
+
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 24px 28px 26px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        background:
+          linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0)),
+          rgba(12, 16, 21, 0.82);
+      }
+
+      .title-wrap h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
+        line-height: 1.1;
+        font-weight: 650;
+        letter-spacing: -0.02em;
+      }
+
+      .title-wrap p {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.45;
+        color: var(--muted);
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: var(--text);
+        white-space: nowrap;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      }
+
+      .status .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--accent-2);
+        box-shadow: 0 0 0 4px rgba(100, 224, 141, 0.14);
+      }
+
+      .status .label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.2;
+      }
+
+      .status .sub {
+        display: block;
+        font-size: 11px;
+        line-height: 1.2;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+
+      .content {
+        display: grid;
+        grid-template-columns: minmax(0, 470px) minmax(0, 1fr);
+        gap: 18px;
+        padding: 22px;
+      }
+
+      .left,
+      .right {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .card {
+        padding: 18px;
+        border-radius: 20px;
+        background: var(--panel);
+        border: 1px solid var(--panel-border);
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.02) inset;
+        backdrop-filter: blur(18px);
+      }
+
+      .card h2 {
+        margin: 0 0 4px;
+        font-size: 16px;
+        line-height: 1.2;
+        font-weight: 650;
+        letter-spacing: -0.01em;
+      }
+
+      .card .subtitle {
+        margin: 0 0 14px;
+        font-size: 12px;
+        line-height: 1.45;
+        color: var(--muted);
+      }
+
+      .field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 14px;
+      }
+
+      .field-group:last-child {
+        margin-bottom: 0;
+      }
+
+      .field-group label,
+      .metric-row .label,
+      .detail-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #eef2f8;
+      }
+
+      .input,
+      .value-box {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 42px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: rgba(18, 22, 29, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        color: var(--muted);
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 0 16px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .button.primary {
+        background: var(--accent);
+        border-color: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 8px 18px rgba(77, 131, 240, 0.24);
+      }
+
+      .grid-two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .metric-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        min-height: 28px;
+        color: var(--text);
+        margin-bottom: 8px;
+      }
+
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        min-height: 30px;
+        margin-top: 10px;
+        color: #d8deea;
+        font-size: 13px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 36px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(100, 224, 141, 0.2);
+        background: rgba(34, 72, 46, 0.82);
+        color: #9ef0b8;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .progress-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .progress-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .progress-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .progress-meta .value {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      .progress-value {
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      .progress-note {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .bar {
+        width: 100%;
+        height: 14px;
+        border-radius: 999px;
+        background: rgba(32, 38, 48, 1);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        overflow: hidden;
+      }
+
+      .bar > span {
+        display: block;
+        height: 100%;
+        width: 18%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #558df5, #3f76e6);
+      }
+
+      .buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .buttons .button {
+        flex: 1 1 0;
+      }
+
+      .detail {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 16px;
+      }
+
+      .detail .value-box {
+        font-size: 13px;
+        color: var(--muted);
+        min-height: 44px;
+      }
+
+      .log-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .log-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .log-toolbar .subtitle {
+        margin: 0;
+      }
+
+      .log-viewport {
+        max-height: 272px;
+        overflow-y: auto;
+        padding-right: 4px;
+        scrollbar-gutter: stable;
+      }
+
+      .log-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #d9e0eb;
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 52px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(42, 49, 60, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        color: #ccd3df;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: lowercase;
+      }
+
+      @media (max-width: 1080px) {
+        body {
+          padding: 16px;
+        }
+
+        .window {
+          width: 100%;
+        }
+
+        .content {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="window" aria-label="Large File Downloader mockup">
+      <header class="header">
+        <div class="title-wrap">
+          <h1>Large File Downloader</h1>
+          <p>A polished local macOS transfer window for aria2c downloads.</p>
+        </div>
+
+        <div class="status" aria-label="Status ready">
+          <span class="dot" aria-hidden="true"></span>
+          <div>
+            <span class="label">Ready</span>
+            <span class="sub">Cmd+Return starts download</span>
+          </div>
+        </div>
+      </header>
+
+      <section class="content">
+        <div class="left">
+          <article class="card">
+            <h2>Source</h2>
+            <p class="subtitle">Paste a redirecting link, choose a folder, and set a name if you want one.</p>
+
+            <div class="field-group">
+              <label>Download URL</label>
+              <div class="input">https://example.com/file</div>
+            </div>
+
+            <div class="field-group">
+              <label>Destination Folder</label>
+              <div class="value-box">
+                <span>/Users/isaac/Downloads</span>
+                <span class="button">Choose Folder</span>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label>Output Filename</label>
+              <div class="input">Leave blank to use the file name from the URL</div>
+            </div>
+          </article>
+
+          <article class="card">
+            <h2>Transfer Options</h2>
+            <p class="subtitle">Tune concurrency and whether the Mac should stay awake during long downloads.</p>
+
+            <div class="metric-row">
+              <span class="label">Connections</span>
+              <span>8</span>
+            </div>
+            <div class="metric-row">
+              <span class="label">Splits</span>
+              <span>4</span>
+            </div>
+            <div class="toggle-row">
+              <span>Resolve final URL before download</span>
+              <span class="pill">On</span>
+            </div>
+            <div class="toggle-row">
+              <span>Keep Mac awake during download</span>
+              <span class="pill">On</span>
+            </div>
+          </article>
+
+          <article class="card">
+            <h2>Actions</h2>
+            <p class="subtitle">Start, stop, or open the destination folder.</p>
+
+            <div class="buttons">
+              <span class="button primary">Start Download</span>
+              <span class="button">Stop</span>
+              <span class="button">Open Folder</span>
+            </div>
+          </article>
+
+          <article class="card">
+            <h2>Progress</h2>
+            <p class="subtitle">Live percentage from aria2c.</p>
+
+            <div class="progress-wrap">
+              <div class="progress-head">
+                <div class="progress-value">0%</div>
+                <div class="progress-note">Waiting for aria2c to emit its first progress summary.</div>
+              </div>
+              <div class="progress-meta">
+                <span>Estimated time remaining</span>
+                <span class="value">12m 34s</span>
+              </div>
+              <div class="bar" aria-hidden="true"><span></span></div>
+            </div>
+          </article>
+        </div>
+
+        <div class="right">
+          <article class="card" style="min-height: 306px;">
+            <div class="log-toolbar">
+              <div>
+                <h2>Live Log</h2>
+                <p class="subtitle">The latest aria2c output stays visible here.</p>
+              </div>
+              <span class="button">Copy Log</span>
+            </div>
+
+            <div class="log-viewport">
+              <div class="log-list">
+                <div class="log-item"><span class="tag">info</span> Paste a large-file URL, choose a folder, and start the transfer.</div>
+                <div class="log-item"><span class="tag">info</span> Validating the source URL and destination folder...</div>
+                <div class="log-item"><span class="tag">command</span> aria2c --dir=/Users/isaac/Downloads --console-log-level=info ...</div>
+                <div class="log-item"><span class="tag">success</span> Download completed successfully.</div>
+                <div class="log-item"><span class="tag">info</span> Waiting for aria2c to emit its first progress summary.</div>
+                <div class="log-item"><span class="tag">info</span> Download queued for resume handling and verification.</div>
+                <div class="log-item"><span class="tag">success</span> Destination folder confirmed and writable.</div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+    <script>
+      const logViewport = document.querySelector('.log-viewport');
+      if (logViewport) {
+        requestAnimationFrame(() => {
+          logViewport.scrollTop = logViewport.scrollHeight;
+        });
+      }
+    </script>
+  </body>
+</html>

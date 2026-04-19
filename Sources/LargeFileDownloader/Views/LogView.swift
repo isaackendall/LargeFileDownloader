@@ -21,12 +21,19 @@ struct LogView: View {
                 }
                 .padding(2)
             }
-            .onChange(of: entries.count) { _, _ in
-                guard let last = entries.last else { return }
-                withAnimation(.snappy) {
-                    proxy.scrollTo(last.id, anchor: .bottom)
-                }
+            .onAppear {
+                scrollToLatest(using: proxy)
             }
+            .onChange(of: entries.count) { _, _ in
+                scrollToLatest(using: proxy)
+            }
+        }
+    }
+
+    private func scrollToLatest(using proxy: ScrollViewProxy) {
+        guard let last = entries.last else { return }
+        withAnimation(.snappy) {
+            proxy.scrollTo(last.id, anchor: .bottom)
         }
     }
 }

@@ -23,31 +23,10 @@ struct ContentView: View {
                         controlColumn
                             .frame(maxWidth: 470)
 
-                        activityColumn
+                        logColumn
                     }
                 }
                 .padding(22)
-            }
-        }
-        .toolbar {
-            ToolbarItemGroup(placement: .automatic) {
-                Button("Start") {
-                    model.startDownload()
-                }
-                .keyboardShortcut(.return, modifiers: [.command])
-
-                Button("Stop") {
-                    model.stopDownload()
-                }
-                .disabled(!model.canStop)
-
-                Button("Copy Command") {
-                    model.copyCommand()
-                }
-
-                Button("Open Folder") {
-                    model.openFolder()
-                }
             }
         }
     }
@@ -119,7 +98,7 @@ struct ContentView: View {
                 }
             }
 
-            SectionCard(title: "Actions", subtitle: "Start, stop, copy, or open the destination folder.") {
+            SectionCard(title: "Actions", subtitle: "Start, stop, or open the destination folder.") {
                 HStack(spacing: 12) {
                     PrimaryButton(title: "Start Download") {
                         model.startDownload()
@@ -130,6 +109,10 @@ struct ContentView: View {
                         model.stopDownload()
                     }
                     .disabled(!model.canStop)
+
+                    SecondaryButton(title: "Open Folder") {
+                        model.openFolder()
+                    }
                 }
             }
 
@@ -150,6 +133,18 @@ struct ContentView: View {
                     ProgressView(value: model.downloadProgress, total: 1)
                         .progressViewStyle(.linear)
 
+                    HStack {
+                        Text("Estimated time remaining")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+
+                        Spacer()
+
+                        Text(model.estimatedTimeRemainingText)
+                            .font(.subheadline.weight(.semibold))
+                            .monospacedDigit()
+                    }
+
                     if model.status == .running && !model.didReceiveProgressUpdate {
                         Text("Waiting for aria2c to emit its first progress summary.")
                             .font(.caption)
@@ -160,31 +155,30 @@ struct ContentView: View {
         }
     }
 
-    private var activityColumn: some View {
+    private var logColumn: some View {
         VStack(alignment: .leading, spacing: 18) {
-            SectionCard(title: "Activity", subtitle: model.status.detail) {
-                VStack(alignment: .leading, spacing: 16) {
-                    detailField(title: "Resolved URL", value: model.resolvedURLText.isEmpty ? "Waiting for resolution" : model.resolvedURLText)
+            SectionCard(title: "", subtitle: "") {
+                VStack(alignment: .leading, spacing: 14) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Live Log")
+                                .font(.headline)
 
-                    detailField(title: "Generated Command", value: model.commandText.isEmpty ? "The aria2c command will appear here." : model.commandText, monospaced: true)
+                            Text("The latest aria2c output stays visible here.")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
 
-                    HStack(spacing: 12) {
-                        PrimaryButton(title: "Copy Resolved URL") {
-                            model.copyResolvedURL()
-                        }
-                        SecondaryButton(title: "Copy Command") {
-                            model.copyCommand()
-                        }
-                        SecondaryButton(title: "Open Folder") {
-                            model.openFolder()
+                        Spacer()
+
+                        SecondaryButton(title: "Copy Log") {
+                            model.copyLog()
                         }
                     }
-                }
-            }
 
-            SectionCard(title: "Live Log", subtitle: "The latest aria2c output stays visible here.") {
-                LogView(entries: model.logs)
-                    .frame(minHeight: 340)
+                    LogView(entries: model.logs)
+                        .frame(minHeight: 340)
+                }
             }
         }
     }
@@ -232,21 +226,6 @@ struct ContentView: View {
             }
         }
     }
-
-    private func detailField(title: String, value: String, monospaced: Bool = false) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.headline)
-
-            Text(value)
-                .font(monospaced ? .system(.callout, design: .monospaced) : .callout)
-                .foregroundStyle(.secondary)
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(12)
-                .background(Color.black.opacity(0.05), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-        }
-    }
 }
 
 private struct SectionCard<Content: View>: View {
@@ -256,12 +235,18 @@ private struct SectionCard<Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.headline)
-                Text(subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+            if !title.isEmpty || !subtitle.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    if !title.isEmpty {
+                        Text(title)
+                            .font(.headline)
+                    }
+                    if !subtitle.isEmpty {
+                        Text(subtitle)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
 
             content
