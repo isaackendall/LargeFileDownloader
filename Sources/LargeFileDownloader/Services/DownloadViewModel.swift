@@ -180,15 +180,7 @@ final class DownloaderViewModel {
     private func updateProgress(_ progress: Double) {
         let clamped = min(max(progress, 0), 1)
         downloadProgress = clamped
-        downloadProgressText = Self.percentFormatter.string(from: NSNumber(value: clamped * 100)) ?? "\(Int((clamped * 100).rounded()))%"
+        downloadProgressText = "\(Int((clamped * 100).rounded()))%"
         didReceiveProgressUpdate = true
     }
-
-    private static let percentFormatter: NumberFormatter = {
-        let formatter = NumberFormatter()
-        formatter.minimumFractionDigits = 0
-        formatter.maximumFractionDigits = 0
-        formatter.numberStyle = .decimal
-        return formatter
-    }()
 }
