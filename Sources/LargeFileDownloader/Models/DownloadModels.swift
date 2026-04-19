@@ -113,6 +113,9 @@ struct DownloadConfiguration: Equatable {
             "-x\(connections)",
             "-s\(splits)",
             "--file-allocation=none",
+            "--console-log-level=notice",
+            "--show-console-readout=true",
+            "--summary-interval=1",
             "--dir=\(destinationFolder)",
             "--out=\(filename)",
             resolvedURL.absoluteString

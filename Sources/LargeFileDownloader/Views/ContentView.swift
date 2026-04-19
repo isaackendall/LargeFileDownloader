@@ -132,6 +132,31 @@ struct ContentView: View {
                     .disabled(!model.canStop)
                 }
             }
+
+            SectionCard(title: "Progress", subtitle: "Live percentage from aria2c.") {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Text(model.downloadProgressText)
+                            .font(.headline)
+                            .monospacedDigit()
+
+                        Spacer()
+
+                        Text(model.status.headline)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    ProgressView(value: model.downloadProgress, total: 1)
+                        .progressViewStyle(.linear)
+
+                    if model.status == .running && !model.didReceiveProgressUpdate {
+                        Text("Waiting for aria2c to emit its first progress summary.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
         }
     }
 

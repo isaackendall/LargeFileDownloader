@@ -6,16 +6,19 @@ final class DownloadSession: @unchecked Sendable {
     private let outputPipe: Pipe
     private let outputBuffer = LineBuffer()
     private let onLine: @Sendable (DownloadLogEntry) -> Void
+    private let onProgress: @Sendable (Double) -> Void
     private var didStop = false
 
     init(
         downloadProcess: Process,
         outputPipe: Pipe,
-        onLine: @escaping @Sendable (DownloadLogEntry) -> Void
+        onLine: @escaping @Sendable (DownloadLogEntry) -> Void,
+        onProgress: @escaping @Sendable (Double) -> Void
     ) {
         self.downloadProcess = downloadProcess
         self.outputPipe = outputPipe
         self.onLine = onLine
+        self.onProgress = onProgress
     }
 
     func setCaffeinateProcess(_ process: Process?) {
@@ -40,6 +43,9 @@ final class DownloadSession: @unchecked Sendable {
     func feedOutput(_ data: Data) {
         for line in outputBuffer.append(data) {
             onLine(DownloadLogEntry(date: Date(), kind: .info, message: line))
+            if let progress = Self.extractProgress(from: line) {
+                onProgress(progress)
+            }
         }
     }
 
@@ -49,6 +55,19 @@ final class DownloadSession: @unchecked Sendable {
         }
         outputPipe.fileHandleForReading.readabilityHandler = nil
     }
+
+    private static func extractProgress(from line: String) -> Double? {
+        guard let range = line.range(of: #"\((\d{1,3})%\)"#, options: .regularExpression) else {
+            return nil
+        }
+
+        let percentText = line[range].trimmingCharacters(in: CharacterSet(charactersIn: "()%"))
+        guard let percent = Double(percentText), (0...100).contains(percent) else {
+            return nil
+        }
+
+        return percent / 100.0
+    }
 }
 
 struct DownloadService {
@@ -57,7 +76,8 @@ struct DownloadService {
         configuration: DownloadConfiguration,
         resolvedURL: URL,
         keepAwake: Bool,
-        onLine: @escaping @Sendable (DownloadLogEntry) -> Void
+        onLine: @escaping @Sendable (DownloadLogEntry) -> Void,
+        onProgress: @escaping @Sendable (Double) -> Void
     ) throws -> DownloadSession {
         let downloadProcess = Process()
         downloadProcess.executableURL = URL(fileURLWithPath: executablePath)
@@ -67,7 +87,12 @@ struct DownloadService {
         downloadProcess.standardOutput = outputPipe
         downloadProcess.standardError = outputPipe
 
-        let session = DownloadSession(downloadProcess: downloadProcess, outputPipe: outputPipe, onLine: onLine)
+        let session = DownloadSession(
+            downloadProcess: downloadProcess,
+            outputPipe: outputPipe,
+            onLine: onLine,
+            onProgress: onProgress
+        )
 
         outputPipe.fileHandleForReading.readabilityHandler = { handle in
             let data = handle.availableData

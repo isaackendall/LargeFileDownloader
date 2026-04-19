@@ -11,6 +11,9 @@ final class DownloaderViewModel {
     var resolvedURLText = ""
     var commandText: String { runningCommandText ?? commandPreviewText() }
     var canStop = false
+    var downloadProgress = 0.0
+    var downloadProgressText = "0%"
+    var didReceiveProgressUpdate = false
 
     private let redirectResolver = RedirectResolver()
     private let downloadService = DownloadService()
@@ -73,6 +76,7 @@ final class DownloaderViewModel {
 
     private func startDownloadTask() async {
         do {
+            resetProgress()
             status = .preparing
             addLog(kind: .info, "Validating the source URL and destination folder...")
 
@@ -107,6 +111,11 @@ final class DownloaderViewModel {
                     Task { @MainActor in
                         self?.logs.append(entry)
                     }
+                },
+                onProgress: { [weak self] progress in
+                    Task { @MainActor in
+                        self?.updateProgress(progress)
+                    }
                 }
             )
 
@@ -117,6 +126,7 @@ final class DownloaderViewModel {
                     self.session = nil
                     self.runningCommandText = nil
                     if exitCode == 0 {
+                        self.updateProgress(1.0)
                         self.status = .finished
                         self.addLog(kind: .success, "Download completed successfully.")
                     } else {
@@ -131,6 +141,7 @@ final class DownloaderViewModel {
             runningCommandText = nil
             status = .failed(error.localizedDescription)
             addLog(kind: .error, error.localizedDescription)
+            resetProgress()
         }
     }
 
@@ -159,4 +170,25 @@ final class DownloaderViewModel {
     private func addLog(kind: DownloadLogKind, _ message: String) {
         logs.append(DownloadLogEntry(date: .now, kind: kind, message: message))
     }
+
+    private func resetProgress() {
+        downloadProgress = 0
+        downloadProgressText = "0%"
+        didReceiveProgressUpdate = false
+    }
+
+    private func updateProgress(_ progress: Double) {
+        let clamped = min(max(progress, 0), 1)
+        downloadProgress = clamped
+        downloadProgressText = Self.percentFormatter.string(from: NSNumber(value: clamped * 100)) ?? "\(Int((clamped * 100).rounded()))%"
+        didReceiveProgressUpdate = true
+    }
+
+    private static let percentFormatter: NumberFormatter = {
+        let formatter = NumberFormatter()
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 0
+        formatter.numberStyle = .decimal
+        return formatter
+    }()
 }
