@@ -17,6 +17,11 @@ let package = Package(
         .executableTarget(
             name: "LargeFileDownloader",
             path: "Sources/LargeFileDownloader"
+        ),
+        .testTarget(
+            name: "LargeFileDownloaderTests",
+            dependencies: ["LargeFileDownloader"],
+            path: "Tests/LargeFileDownloaderTests"
         )
     ]
 )
