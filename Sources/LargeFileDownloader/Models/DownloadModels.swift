@@ -106,7 +106,7 @@ struct DownloadConfiguration: Equatable {
     func effectiveFilename(for url: URL) -> String {
         let trimmed = outputFilename.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {
-            return trimmed
+            return Self.filenamePreservingExtension(trimmed, sourceURL: url)
         }
 
         if let lastComponent = url.pathComponents.last, !lastComponent.isEmpty, lastComponent != "/" {
@@ -114,6 +114,43 @@ struct DownloadConfiguration: Equatable {
         }
 
         return "download.bin"
+    }
+
+    func filenamePreview(for url: URL?) -> String {
+        guard let url else {
+            let trimmed = outputFilename.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty ? "download.bin" : trimmed
+        }
+
+        return effectiveFilename(for: url)
+    }
+
+    func filenamePreviewNeedsResolvedURL(for url: URL?) -> Bool {
+        let trimmed = outputFilename.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty,
+              URL(fileURLWithPath: trimmed).pathExtension.isEmpty else {
+            return false
+        }
+
+        guard let url else {
+            return true
+        }
+
+        return url.pathExtension.isEmpty
+    }
+
+    private static func filenamePreservingExtension(_ filename: String, sourceURL: URL) -> String {
+        let sourceExtension = sourceURL.pathExtension
+        guard !sourceExtension.isEmpty else {
+            return filename
+        }
+
+        let customExtension = URL(fileURLWithPath: filename).pathExtension
+        guard customExtension.isEmpty else {
+            return filename
+        }
+
+        return "\(filename).\(sourceExtension)"
     }
 
     func aria2Arguments(for resolvedURL: URL) -> [String] {

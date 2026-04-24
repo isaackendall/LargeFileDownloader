@@ -3,6 +3,12 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(DownloaderViewModel.self) private var model
+    @FocusState private var focusedField: Field?
+
+    private enum Field: Hashable {
+        case sourceURL
+        case outputFilename
+    }
 
     private var configBinding: Binding<DownloadConfiguration> {
         Binding(
@@ -73,18 +79,15 @@ struct ContentView: View {
                     labeledTextField(
                         title: "Download URL",
                         placeholder: "https://example.com/file",
-                        text: configBinding.sourceURLText
+                        text: configBinding.sourceURLText,
+                        field: .sourceURL
                     )
 
                     rowWithButton(title: "Destination Folder", value: model.configuration.destinationFolder, buttonTitle: "Choose Folder") {
                         model.chooseFolder()
                     }
 
-                    labeledTextField(
-                        title: "Output Filename",
-                        placeholder: "Leave blank to use the file name from the URL",
-                        text: configBinding.outputFilename
-                    )
+                    outputFilenameField
                 }
             }
 
@@ -183,13 +186,46 @@ struct ContentView: View {
         }
     }
 
-    private func labeledTextField(title: String, placeholder: String, text: Binding<String>) -> some View {
+    private var outputFilenameField: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Output Filename")
+                .font(.headline)
+
+            HStack(spacing: 8) {
+                TextField("Leave blank to use the file name from the URL", text: configBinding.outputFilename)
+                    .textFieldStyle(.roundedBorder)
+                    .focused($focusedField, equals: .outputFilename)
+                    .onSubmit {
+                        focusedField = nil
+                    }
+
+                if focusedField == .outputFilename {
+                    Button("Done") {
+                        focusedField = nil
+                    }
+                    .buttonStyle(.bordered)
+                }
+            }
+
+            Text(model.filenamePreviewNote)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .truncationMode(.middle)
+        }
+    }
+
+    private func labeledTextField(title: String, placeholder: String, text: Binding<String>, field: Field) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.headline)
 
             TextField(placeholder, text: text)
                 .textFieldStyle(.roundedBorder)
+                .focused($focusedField, equals: field)
+                .onSubmit {
+                    focusedField = nil
+                }
         }
     }
 

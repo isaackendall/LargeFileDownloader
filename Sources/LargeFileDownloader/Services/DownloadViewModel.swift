@@ -11,6 +11,14 @@ final class DownloaderViewModel {
     var resolvedURLText = ""
     var commandText: String { runningCommandText ?? commandPreviewText() }
     var estimatedTimeRemainingText: String { estimatedTimeRemaining() }
+    var filenamePreviewText: String { configuration.filenamePreview(for: filenamePreviewURL()) }
+    var filenamePreviewNote: String {
+        if configuration.filenamePreviewNeedsResolvedURL(for: filenamePreviewURL()) {
+            return "File type will be kept after the final URL resolves."
+        }
+
+        return "Will save as \(filenamePreviewText)"
+    }
     var canStop = false
     var downloadProgress = 0.0
     var downloadProgressText = "0%"
@@ -183,6 +191,14 @@ final class DownloaderViewModel {
         }
 
         return ShellQuote.joined("aria2c", configuration.aria2Arguments(for: effectiveURL))
+    }
+
+    private func filenamePreviewURL() -> URL? {
+        if let resolved = URL(string: resolvedURLText) {
+            return resolved
+        }
+
+        return try? configuration.validatedSourceURL()
     }
 
     private func addLog(kind: DownloadLogKind, _ message: String) {
